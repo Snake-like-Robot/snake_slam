@@ -1,0 +1,17 @@
+<launch>
+    <!-- model可选：snake_robot,burger,waffle, waffle_pi -->
+    <arg name="model" default="burger"/>
+    <arg name="use_rviz" default="true"/>
+
+    <!-- 机器人模型文件 -->
+    <arg name="urdf_file" default="$(find xacro)/xacro --inorder '$(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro'" />
+    <param name="robot_description" command="$(arg urdf_file)" />
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+        <param name="publish_frequency" type="double" value="50.0" />
+    </node>
+
+    <group if="$(arg use_rviz)">
+        <node pkg="rviz" type="rviz" name="rviz" required="true" args="-d $(find snake_slam)/config/turtlebot3_slam_config.rviz"/>
+    </group>
+</launch>
