@@ -142,6 +142,8 @@ add_executable(laser_test src/laser_test.cpp src/laser_scan.cpp)
 
 add_executable(turtlebot3_teleop_ctrl src/turtlebot3_teleop_ctrl.cpp)
 
+add_executable(snake_slam_node src/snake_slam.cpp src/laser_odometer.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -160,6 +162,8 @@ add_executable(turtlebot3_teleop_ctrl src/turtlebot3_teleop_ctrl.cpp)
 target_link_libraries(laser_test ${catkin_LIBRARIES})
 
 target_link_libraries(turtlebot3_teleop_ctrl ${catkin_LIBRARIES})
+
+target_link_libraries(snake_slam_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##
