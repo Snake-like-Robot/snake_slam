@@ -18,8 +18,9 @@ LaserOdom::LaserOdom(int max_iter) : max_iter_cnt(max_iter)
  * @author jeong (lzh_jeong@qq.com)
  * @date 2022-02-01
  *
- * @details 1.求解旋转矩阵R和平移向量t，将source_pc(P')(前一帧)变换到target_pc(P)(后一帧)
- *          2.point cloud矩阵的维度为2*n
+ * @details 1.求解旋转矩阵R和平移向量t，将source_pc(P')(后一帧)变换到target_pc(P)(前一帧)
+ *          2.不需要将激光雷达的数据预先转换到世界坐标系
+ *          3.point cloud矩阵的维度为2*n
  * @todo
  */
 void LaserOdom::IcpProcess(Eigen::Matrix2d &rot_mat, Eigen::Vector2d &trans_vector, pc src, pc tar)

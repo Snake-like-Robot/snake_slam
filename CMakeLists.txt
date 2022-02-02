@@ -142,7 +142,11 @@ add_executable(laser_test src/laser_test.cpp src/laser_scan.cpp)
 
 add_executable(turtlebot3_teleop_ctrl src/turtlebot3_teleop_ctrl.cpp)
 
-add_executable(snake_slam_node src/snake_slam.cpp src/laser_odometer.cpp)
+add_executable(snake_slam_node
+src/snake_slam.cpp
+src/laser_odometer.cpp
+src/particle_filter.cpp
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

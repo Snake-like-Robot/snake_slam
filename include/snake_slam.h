@@ -6,19 +6,26 @@
 #include <eigen3/Eigen/Dense>
 
 #include "laser_odometer.h"
+#include "particle_filter.h"
 
-class SnakeSlam
+namespace snake_slam
 {
-private:
-    ros::NodeHandle _nh;
-    ros::Subscriber _laser_sub;
-    ros::Publisher _map_pub;
-    ros::Publisher _location_pub;
+    class SnakeSlam
+    {
+    private:
+        ros::NodeHandle _nh;
+        ros::Subscriber _laser_sub;
+        ros::Publisher _map_pub;
+        ros::Publisher _location_pub;
+        laser_odom::pc last_pc;
+        laser_odom::pc cur_pc;
+        bool is_first;
 
-public:
-    SnakeSlam(const std::string &);
-    ~SnakeSlam(){};
-    void LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &);
+    public:
+        SnakeSlam(const std::string &);
+        ~SnakeSlam(){};
+        void LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &);
+        laser_odom::pc LaserMsg2Pc(const sensor_msgs::LaserScan::ConstPtr &);
+    };
 };
-
 #endif
