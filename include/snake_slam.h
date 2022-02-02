@@ -6,7 +6,6 @@
 #include <eigen3/Eigen/Dense>
 
 #include "laser_odometer.h"
-#include "particle_filter.h"
 
 namespace snake_slam
 {
@@ -23,7 +22,7 @@ namespace snake_slam
 
     public:
         SnakeSlam(const std::string &);
-        ~SnakeSlam(){};
+        ~SnakeSlam();
         void LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &);
         laser_odom::pc LaserMsg2Pc(const sensor_msgs::LaserScan::ConstPtr &);
     };

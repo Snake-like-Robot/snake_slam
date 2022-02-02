@@ -1,14 +1,18 @@
-#include "particle_filter.h"
+#include "snake_pf.h"
 
-using namespace particlefilter;
+using namespace snakePF;
+
+PF::PF() {}
+
+PF::~PF() {}
 
 robot_state PF::PfProcess(robot_state last_states, Eigen::Matrix2d R, Eigen::Vector2d t)
 {
     /*对t-1时刻的粒子集进行粒子传递*/
     int state_num = last_states.cols();
     robot_state state_trans;
-    state_trans.resize(3,state_num);
-    state_trans = StateTransfer(R,t,last_states);
+    state_trans.resize(3, state_num);
+    state_trans = StateTransfer(R, t, last_states);
     /*对传递后的粒子计算权重(使用观测模型)*/
 
     /*基于重要性的重采样，得到新的粒子集*/

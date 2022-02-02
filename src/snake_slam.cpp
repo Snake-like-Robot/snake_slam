@@ -21,6 +21,8 @@ SnakeSlam::SnakeSlam(const std::string &laser_topic_sub)
     is_first = true;
 }
 
+SnakeSlam::~SnakeSlam() {}
+
 void SnakeSlam::LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
 {
     /*第一帧数据需要初始化一个可用地图，坐标系定义为map*/
