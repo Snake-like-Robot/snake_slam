@@ -1,10 +1,10 @@
 /**
  * @file snake_pf.cpp
  * @author jeong (lzh_jeong@qq.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2022-02-02
- * 
+ *
  * @details
  * @todo 高斯分布归一化常数计算
  */
@@ -29,7 +29,9 @@ robot_state PF::PfProcess(robot_state last_states, laser_odom::pc laser_scan, Ei
     state_trans.resize(3, state_num);
     state_trans = StateTransfer(R, t, last_states);
     /*对传递后的粒子计算权重(使用观测模型)*/
-
+    weight_list weights;
+    weights.resize(1, state_num);
+    weights = ObservationModel(state_trans, laser_scan, grid_map);
     /*基于重要性的重采样，得到新的粒子集*/
     return state_trans;
 }
@@ -91,9 +93,8 @@ weight_list PF::ObservationModel(robot_state state_trans, laser_odom::pc laser_s
 double PF::BeamRangeFinderModel(double real_dist, double measured_dist)
 {
     /*计算高斯分布的概率及其归一化常数*/
-    double p_hit_eta = NormalizeFactorCal();
-    std::normal_distribution<double> p_hit_disturbution(real_dist, coefs.sigma_hit_frac * real_dist);
-    // double p_hit = p_hit_eta * p_hit_disturbution(measured_dist);
+    double p_hit_eta = NormalizeFactorCal(real_dist, measured_dist, 10);
+    double p_hit = p_hit_eta * GaussianFunctionCal(measured_dist, real_dist);
     /*计算指数分布的概率及其归一化常数*/
     double p_short_eta = 1.0 / (1 - exp(-coefs.lambda_short * real_dist));
     double p_short = p_short_eta * coefs.lambda_short * exp(-coefs.lambda_short * measured_dist);
@@ -106,12 +107,21 @@ double PF::BeamRangeFinderModel(double real_dist, double measured_dist)
     /*计算均匀分布情况下的概率*/
     double p_rand = 1.0 / coefs.range_max;
     /*全部参数综合*/
-    // double p = coefs.z_hit * p_hit + coefs.z_short * p_short + coefs.z_max * p_max + coefs.z_rand * p_rand;
-    // return p;
-    return 0;
+    double p = coefs.z_hit * p_hit + coefs.z_short * p_short + coefs.z_max * p_max + coefs.z_rand * p_rand;
+    return p;
 }
 
-double PF::NormalizeFactorCal()
+double PF::GaussianFunctionCal(double z, double z_star)
 {
-    return 0;
+    return 1.0 / (2 * M_PI * coefs.sigma_hit_frac * z) * exp(-pow(z - z_star, 2) / (2 * pow(coefs.sigma_hit_frac * z, 2)));
+}
+
+double PF::NormalizeFactorCal(double real, double measured, int step_num)
+{
+    double sum = 0, step = coefs.range_max / step_num;
+    for (int i = 0; i < step_num; i++)
+    {
+        sum += 0.5 * (GaussianFunctionCal(step * i, real) + GaussianFunctionCal(step * (i + 1), real)) * step;
+    }
+    return 1.0 / sum;
 }

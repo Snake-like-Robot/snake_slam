@@ -3,7 +3,7 @@
 
 #include <eigen3/Eigen/Dense>
 #include <nav_msgs/OccupancyGrid.h>
-#include <random>
+#include <math.h>
 
 #include "laser_odometer.h"
 
@@ -36,7 +36,8 @@ namespace snakePF
         robot_state StateTransfer(Eigen::Matrix2d, Eigen::Vector2d, robot_state);
         weight_list ObservationModel(robot_state, laser_odom::pc, Eigen::MatrixXd);
         double BeamRangeFinderModel(double, double);
-        double NormalizeFactorCal();
+        double NormalizeFactorCal(double, double, int);
+        double GaussianFunctionCal(double,double);
     };
 }
 
