@@ -1,12 +1,27 @@
+/**
+ * @file snake_pf.cpp
+ * @author jeong (lzh_jeong@qq.com)
+ * @brief 
+ * @version 0.1
+ * @date 2022-02-02
+ * 
+ * @details
+ * @todo 高斯分布归一化常数计算
+ */
+
 #include "snake_pf.h"
 
 using namespace snakePF;
 
-PF::PF() {}
+PF::PF(pf_coefs coef)
+    : coefs(coef)
+{
+}
 
 PF::~PF() {}
 
-robot_state PF::PfProcess(robot_state last_states, Eigen::Matrix2d R, Eigen::Vector2d t)
+//这里的地图是局部地图
+robot_state PF::PfProcess(robot_state last_states, laser_odom::pc laser_scan, Eigen::Matrix2d R, Eigen::Vector2d t, Eigen::MatrixXd grid_map)
 {
     /*对t-1时刻的粒子集进行粒子传递*/
     int state_num = last_states.cols();
@@ -34,4 +49,69 @@ robot_state PF::StateTransfer(Eigen::Matrix2d R, Eigen::Vector2d t, robot_state 
         state_trans(2, i) = last_state(2, i) + dtheta;
     }
     return state_trans;
+}
+
+/**
+ * @brief
+ *
+ * @param state_trans
+ * @param laser_scan
+ * @param grid_map
+ * @return weight_list
+ * @version 0.1
+ * @author jeong (lzh_jeong@qq.com)
+ * @date 2022-02-02
+ *
+ * @details
+ * @todo
+ */
+weight_list PF::ObservationModel(robot_state state_trans, laser_odom::pc laser_scan, Eigen::MatrixXd grid_map)
+{
+    int state_num = state_trans.cols();
+    int beam_num = laser_scan.cols();
+    Eigen::Vector2d point_index, point_diff;
+    double real_dist, measured_dist;
+    weight_list weights;
+    weights.resize(1, state_num);
+    for (int state_id = 0; state_id < state_num; state_id++)
+    {
+        // point_index = 给定(x,y)坐标，获取在地图中的id
+        for (int beam_id = 0; beam_id < beam_num; beam_id++)
+        {
+            point_diff = laser_scan.col(beam_id) - state_trans.col(state_id).head(2);
+            real_dist = point_diff.norm();
+            // point_diff = 从地图中的id得到该栅格中心的位置 - state_trans.col(state_id).head(2);
+            measured_dist = point_diff.norm();
+            weights(state_id) += BeamRangeFinderModel(real_dist, measured_dist);
+        }
+    }
+    return weights;
+}
+
+double PF::BeamRangeFinderModel(double real_dist, double measured_dist)
+{
+    /*计算高斯分布的概率及其归一化常数*/
+    double p_hit_eta = NormalizeFactorCal();
+    std::normal_distribution<double> p_hit_disturbution(real_dist, coefs.sigma_hit_frac * real_dist);
+    // double p_hit = p_hit_eta * p_hit_disturbution(measured_dist);
+    /*计算指数分布的概率及其归一化常数*/
+    double p_short_eta = 1.0 / (1 - exp(-coefs.lambda_short * real_dist));
+    double p_short = p_short_eta * coefs.lambda_short * exp(-coefs.lambda_short * measured_dist);
+    /*计算检测失败的情况*/
+    double p_max;
+    if (measured_dist == coefs.range_max)
+        p_max = 1;
+    else
+        p_max = 0;
+    /*计算均匀分布情况下的概率*/
+    double p_rand = 1.0 / coefs.range_max;
+    /*全部参数综合*/
+    // double p = coefs.z_hit * p_hit + coefs.z_short * p_short + coefs.z_max * p_max + coefs.z_rand * p_rand;
+    // return p;
+    return 0;
+}
+
+double PF::NormalizeFactorCal()
+{
+    return 0;
 }

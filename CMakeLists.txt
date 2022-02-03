@@ -145,7 +145,7 @@ add_executable(turtlebot3_teleop_ctrl src/turtlebot3_teleop_ctrl.cpp)
 add_executable(snake_slam_node
 src/snake_slam.cpp
 src/laser_odometer.cpp
-src/particle_filter.cpp
+src/snake_pf.cpp
 )
 
 ## Rename C++ executable without prefix
