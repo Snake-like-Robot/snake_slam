@@ -24,26 +24,28 @@ PF::~PF() {}
 robot_state PF::PfProcess(robot_state last_states, laser_odom::pc laser_scan, Eigen::Matrix2d R, Eigen::Vector2d t, Eigen::MatrixXd grid_map)
 {
     /*对t-1时刻的粒子集进行粒子传递*/
-    int state_num = last_states.cols();
     robot_state state_trans;
-    state_trans.resize(3, state_num);
+    state_trans.resize(3, coefs.state_num);
     state_trans = StateTransfer(R, t, last_states);
     /*对传递后的粒子计算权重(使用观测模型)*/
     weight_list weights;
-    weights.resize(1, state_num);
+    weights.resize(1, coefs.state_num);
     weights = ObservationModel(state_trans, laser_scan, grid_map);
     /*基于重要性的重采样，得到新的粒子集*/
-    return state_trans;
+    robot_state state_pre;
+    state_pre.resize(3, coefs.state_num);
+    state_pre = Resample(state_trans, weights);
+
+    return state_pre;
 }
 
 robot_state PF::StateTransfer(Eigen::Matrix2d R, Eigen::Vector2d t, robot_state last_state)
 {
     robot_state state_trans;
-    int state_num = last_state.cols();
-    state_trans.resize(3, state_num);
+    state_trans.resize(3, coefs.state_num);
     double dtheta = atan2(R(1, 0), R(0, 0));
     double delta_rot1, delta_trans = t.norm();
-    for (int i = 0; i < state_num; i++)
+    for (int i = 0; i < coefs.state_num; i++)
     {
         delta_rot1 = atan2(t(1, 0), t(0, 0)) - last_state(2, i);
         state_trans(0, i) = last_state(0, i) + delta_trans * cos(delta_rot1 + last_state(2, i));
@@ -69,13 +71,12 @@ robot_state PF::StateTransfer(Eigen::Matrix2d R, Eigen::Vector2d t, robot_state 
  */
 weight_list PF::ObservationModel(robot_state state_trans, laser_odom::pc laser_scan, Eigen::MatrixXd grid_map)
 {
-    int state_num = state_trans.cols();
     int beam_num = laser_scan.cols();
     Eigen::Vector2d point_index, point_diff;
     double real_dist, measured_dist;
     weight_list weights;
-    weights.resize(1, state_num);
-    for (int state_id = 0; state_id < state_num; state_id++)
+    weights.resize(1, coefs.state_num);
+    for (int state_id = 0; state_id < coefs.state_num; state_id++)
     {
         // point_index = 给定(x,y)坐标，获取在地图中的id
         for (int beam_id = 0; beam_id < beam_num; beam_id++)
@@ -124,4 +125,29 @@ double PF::NormalizeFactorCal(double real, double measured, int step_num)
         sum += 0.5 * (GaussianFunctionCal(step * i, real) + GaussianFunctionCal(step * (i + 1), real)) * step;
     }
     return 1.0 / sum;
+}
+
+robot_state PF::Resample(robot_state states, weight_list weights)
+{
+    /*权重归一化*/
+    weights.resize(1, coefs.state_num);
+    weights *= 1.0 / weights.sum();
+
+    robot_state states_pre;
+    states_pre.resize(3, coefs.state_num);
+    double temp_sum = 0, rand_num;
+    srand(time(NULL));
+    for (int state_id = 0; state_id < coefs.state_num; state_id++)
+    {
+        rand_num = rand() % (N + 1) / (double)(N + 1);
+        for (int id = 0; id < coefs.state_num; id++)
+        {
+            if (rand_num >= temp_sum && rand_num < temp_sum + weights(id))
+            {
+                states_pre.col(state_id) = states.col(id);
+                break;
+            }
+        }
+    }
+    return states_pre;
 }

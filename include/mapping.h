@@ -21,19 +21,20 @@ namespace snake_map
     class SnakeMap
     {
     private:
-        double width_x,width_y,xyreso;      //实际大小以及像素精度
-        double minx,maxx,miny,maxy;         //边界条件
-        uint64_t xw,yw;
+        double width_x, width_y, xyreso; //实际大小以及像素精度
+        double minx, maxx, miny, maxy;   //边界条件
+        uint64_t xw, yw;
         int getindexX(double x);
         int getindexY(double y);
-        void gridset(int x,int y,bool state);
-        void bresenham(int cx,int cy,int ox,int oy);
-        Eigen::MatrixXd pmap,logm;
+        void gridset(int x, int y, bool state);
+        void bresenham(int cx, int cy, int ox, int oy);
+        Eigen::MatrixXd pmap, logm;
+
     public:
-        SnakeMap(int lenx,int leny,double xyreso);
-            //初始化类，整数lenx，leny表示地图大小（多少格），xyreso表示精度，即每格多宽
-        int update(Eigen::VectorXd ox,Eigen::VectorXd oy,double center_x,double center_y);
-            //向其中添加一世界坐标系下的激光数据，分别为激光点坐标x向量，坐标y向量，以及小车的x，y坐标
+        SnakeMap(int lenx, int leny, double xyreso);
+        //初始化类，整数lenx，leny表示地图大小（多少格），xyreso表示精度，即每格多宽
+        int update(Eigen::VectorXd ox, Eigen::VectorXd oy, double center_x, double center_y);
+        //向其中添加一世界坐标系下的激光数据，分别为激光点坐标x向量，坐标y向量，以及小车的x，y坐标
         ~SnakeMap(){};
         nav_msgs::OccupancyGrid rviz_map;
     };

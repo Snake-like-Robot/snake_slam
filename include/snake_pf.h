@@ -4,6 +4,8 @@
 #include <eigen3/Eigen/Dense>
 #include <nav_msgs/OccupancyGrid.h>
 #include <math.h>
+#include <ctime>
+#include <cstdlib>
 
 #include "laser_odometer.h"
 
@@ -11,6 +13,8 @@ namespace snakePF
 {
     typedef Eigen::Matrix<double, 3, -1> robot_state; // x,y,theta
     typedef Eigen::Matrix<double, 1, -1> weight_list;
+
+    #define N 999 //随机数精度为小数点后3位
 
     struct pf_coefs
     {
@@ -22,6 +26,7 @@ namespace snakePF
         double z_short;
         double z_max;
         double z_rand;
+        int state_num;
     };
 
     class PF
@@ -38,6 +43,7 @@ namespace snakePF
         double BeamRangeFinderModel(double, double);
         double NormalizeFactorCal(double, double, int);
         double GaussianFunctionCal(double,double);
+        robot_state Resample(robot_state, weight_list);
     };
 }
 
