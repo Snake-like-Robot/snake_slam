@@ -81,7 +81,7 @@ int SnakeMap::update(Eigen::VectorXd ox, Eigen::VectorXd oy, double center_x, do
     }
     return 0;
 }
-int SnakeMap::update(Eigen::MatrixXd oxy, Eigen::Vector2d center)
+int SnakeMap::update(laser_odom::pc oxy, Eigen::Vector2d center)
 {
     return update(oxy.row(0), oxy.row(1), center(0), center(1));
 }

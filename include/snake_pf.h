@@ -6,7 +6,6 @@
 #include <math.h>
 #include <ctime>
 #include <cstdlib>
-#include <mapping.h>
 
 #include "laser_odometer.h"
 #include "mapping.h"
@@ -39,9 +38,9 @@ namespace snakePF
     public:
         PF(pf_coefs);
         ~PF();
-        robot_state PfProcess(robot_state, laser_odom::pc, Eigen::Matrix2d, Eigen::Vector2d, snake_map::SnakeMap &);
+        robot_state PfProcess(robot_state, laser_odom::pc, Eigen::Matrix2d, Eigen::Vector2d, snake_map::SnakeMap *);
         robot_state StateTransfer(Eigen::Matrix2d, Eigen::Vector2d, robot_state);
-        weight_list ObservationModel(robot_state, laser_odom::pc, snake_map::SnakeMap &);
+        weight_list ObservationModel(robot_state, laser_odom::pc, snake_map::SnakeMap *);
         double BeamRangeFinderModel(double, double);
         double NormalizeFactorCal(double, double, int);
         double GaussianFunctionCal(double, double);

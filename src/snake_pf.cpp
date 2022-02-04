@@ -6,7 +6,7 @@
  * @date 2022-02-02
  *
  * @details
- * @todo 高斯分布归一化常数计算
+ * @todo 一大堆参数需要调参
  */
 
 #include "snake_pf.h"
@@ -20,8 +20,8 @@ PF::PF(pf_coefs coef)
 
 PF::~PF() {}
 
-//这里的地图是局部地图
-robot_state PF::PfProcess(robot_state last_states, laser_odom::pc laser_scan, Eigen::Matrix2d R, Eigen::Vector2d t, snake_map::SnakeMap &grid_map)
+//这里的地图是全局地图
+robot_state PF::PfProcess(robot_state last_states, laser_odom::pc laser_scan, Eigen::Matrix2d R, Eigen::Vector2d t, snake_map::SnakeMap *grid_map)
 {
     /*对t-1时刻的粒子集进行粒子传递*/
     robot_state state_trans;
@@ -69,7 +69,7 @@ robot_state PF::StateTransfer(Eigen::Matrix2d R, Eigen::Vector2d t, robot_state 
  * @details
  * @todo
  */
-weight_list PF::ObservationModel(robot_state state_trans, laser_odom::pc laser_scan, snake_map::SnakeMap &grid_map)
+weight_list PF::ObservationModel(robot_state state_trans, laser_odom::pc laser_scan, snake_map::SnakeMap *grid_map)
 {
     int beam_num = laser_scan.cols();
     Eigen::Vector2d point_diff;
@@ -83,8 +83,8 @@ weight_list PF::ObservationModel(robot_state state_trans, laser_odom::pc laser_s
         {
             point_diff = laser_scan.col(beam_id) - state_trans.col(state_id).head(2);
             measured_dist = point_diff.norm();
-            point_index = grid_map.getMapIndex(laser_scan.col(beam_id));
-            point_diff = grid_map.getMapGrid(point_index) - state_trans.col(state_id).head(2);
+            point_index = grid_map->getMapIndex(laser_scan.col(beam_id));
+            point_diff = grid_map->getMapGrid(point_index) - state_trans.col(state_id).head(2);
             real_dist = point_diff.norm();
             weights(state_id) += BeamRangeFinderModel(real_dist, measured_dist);
         }
