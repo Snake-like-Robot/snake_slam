@@ -8,13 +8,14 @@
 #include <cstdlib>
 
 #include "laser_odometer.h"
+#include "mapping.h"
 
 namespace snakePF
 {
     typedef Eigen::Matrix<double, 3, -1> robot_state; // x,y,theta
     typedef Eigen::Matrix<double, 1, -1> weight_list;
 
-    #define N 999 //随机数精度为小数点后3位
+#define N 999 //随机数精度为小数点后3位
 
     struct pf_coefs
     {
@@ -37,12 +38,12 @@ namespace snakePF
     public:
         PF(pf_coefs);
         ~PF();
-        robot_state PfProcess(robot_state, laser_odom::pc, Eigen::Matrix2d, Eigen::Vector2d, Eigen::MatrixXd);
+        robot_state PfProcess(robot_state, laser_odom::pc, Eigen::Matrix2d, Eigen::Vector2d, snake_map::SnakeMap &);
         robot_state StateTransfer(Eigen::Matrix2d, Eigen::Vector2d, robot_state);
-        weight_list ObservationModel(robot_state, laser_odom::pc, Eigen::MatrixXd);
+        weight_list ObservationModel(robot_state, laser_odom::pc, snake_map::SnakeMap &);
         double BeamRangeFinderModel(double, double);
         double NormalizeFactorCal(double, double, int);
-        double GaussianFunctionCal(double,double);
+        double GaussianFunctionCal(double, double);
         robot_state Resample(robot_state, weight_list);
     };
 }
