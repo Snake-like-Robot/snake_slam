@@ -79,6 +79,7 @@ int SnakeMap::update(Eigen::VectorXd ox, Eigen::VectorXd oy, double center_x, do
         gridset(x, y, Occupy);
         bresenham(cx, cy, x, y);
     }
+    return 0;
 }
 int SnakeMap::update(Eigen::MatrixXd oxy, Eigen::Vector2d center)
 {
