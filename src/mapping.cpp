@@ -39,7 +39,7 @@ void SnakeMap::gridset(int x, int y, bool state)
         tag = lofree;
 
     logm(x, y) += tag;
-    pmap(x, y) = 1 - 1.0 / (1 + pow(e, logm(x, y)));
+    pmap(x, y) = 1 - 1.0 / (1 + pow(M_E, logm(x, y)));
 #else
     pmap(x, y) = state;
 #endif
