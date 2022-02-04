@@ -79,13 +79,13 @@ weight_list PF::ObservationModel(robot_state state_trans, laser_odom::pc laser_s
     weights.resize(1, coefs.state_num);
     for (int state_id = 0; state_id < coefs.state_num; state_id++)
     {
-        // point_index = 给定(x,y)坐标，获取在地图中的id
         for (int beam_id = 0; beam_id < beam_num; beam_id++)
         {
             point_diff = laser_scan.col(beam_id) - state_trans.col(state_id).head(2);
-            real_dist = point_diff.norm();
-            // point_diff = 从地图中的id得到该栅格中心的位置 - state_trans.col(state_id).head(2);
             measured_dist = point_diff.norm();
+            point_index = grid_map.getMapIndex(laser_scan.col(beam_id));
+            point_diff = grid_map.getMapGrid(point_index) - state_trans.col(state_id).head(2);
+            real_dist = point_diff.norm();
             weights(state_id) += BeamRangeFinderModel(real_dist, measured_dist);
         }
     }
