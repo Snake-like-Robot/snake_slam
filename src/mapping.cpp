@@ -27,6 +27,7 @@ SnakeMap::SnakeMap(int lenx, int leny, double xyr)
 }
 int SnakeMap::getindexX(double x) { return (int)((x - minx) / xyreso); }
 int SnakeMap::getindexY(double y) { return (int)((y - miny) / xyreso); }
+int SnakeMap::getMapIndex(int x,int y){ return x*rviz_map.info.width+y;}
 void SnakeMap::gridset(int x, int y, bool state)
 {
     if (x < 0 || x >= xw || y < 0 || y >= yw)
@@ -43,7 +44,7 @@ void SnakeMap::gridset(int x, int y, bool state)
 #else
     pmap(x, y) = state;
 #endif
-    rviz_map.data[x * rviz_map.info.width + y] = (int8_t)(pmap(x, y) * 100);
+    rviz_map.data[getMapIndex(x,y)] = (int8_t)(pmap(x, y) * 100);
 }
 void SnakeMap::bresenham(int x0, int y0, int x1, int y1)
 {

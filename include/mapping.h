@@ -15,7 +15,6 @@
 #define lofree -1.3863
 /*occupy情况下的概率态，值为ln(0.9/0.1)*/
 #define looccu 2.1972
-#define e 2.71828
 namespace snake_map
 {
     class SnakeMap
@@ -24,10 +23,11 @@ namespace snake_map
         double width_x, width_y, xyreso; //实际大小以及像素精度
         double minx, maxx, miny, maxy;   //边界条件
         uint64_t xw, yw;
-        int getindexX(double x);
-        int getindexY(double y);
         void gridset(int x, int y, bool state);
         void bresenham(int cx, int cy, int ox, int oy);
+        int getMapIndex(int x,int y);
+        int getindexX(double x);
+        int getindexY(double y);
         Eigen::MatrixXd pmap, logm;
 
     public:
@@ -35,6 +35,17 @@ namespace snake_map
         //初始化类，整数lenx，leny表示地图大小（多少格），xyreso表示精度，即每格多宽
         int update(Eigen::VectorXd ox, Eigen::VectorXd oy, double center_x, double center_y);
         //向其中添加一世界坐标系下的激光数据，分别为激光点坐标x向量，坐标y向量，以及小车的x，y坐标
+        Eigen::Vector2i getMapIndex(Eigen::Vector2d tag){
+            Eigen::Vector2i p;
+            p(0)=getindexX(tag(0));
+            p(1)=getindexY(tag(1));
+            return p;
+        }
+        Eigen::Vector2d getMapGrid(Eigen::Vector2i tag){
+            Eigen::Vector2d p;
+            p(0)=minx+tag(0)*xyreso+xyreso/2;
+            p(1)=miny+tag(1)*xyreso+xyreso/2;
+        }
         ~SnakeMap(){};
         nav_msgs::OccupancyGrid rviz_map;
     };

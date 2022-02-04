@@ -6,6 +6,7 @@
 #include <math.h>
 #include <ctime>
 #include <cstdlib>
+#include <mapping.h>
 
 #include "laser_odometer.h"
 #include "mapping.h"
