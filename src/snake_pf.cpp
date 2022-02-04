@@ -21,7 +21,7 @@ PF::PF(pf_coefs coef)
 PF::~PF() {}
 
 //这里的地图是局部地图
-robot_state PF::PfProcess(robot_state last_states, laser_odom::pc laser_scan, Eigen::Matrix2d R, Eigen::Vector2d t, Eigen::MatrixXd grid_map)
+robot_state PF::PfProcess(robot_state last_states, laser_odom::pc laser_scan, Eigen::Matrix2d R, Eigen::Vector2d t, snake_map::SnakeMap &grid_map)
 {
     /*对t-1时刻的粒子集进行粒子传递*/
     robot_state state_trans;
@@ -69,7 +69,7 @@ robot_state PF::StateTransfer(Eigen::Matrix2d R, Eigen::Vector2d t, robot_state 
  * @details
  * @todo
  */
-weight_list PF::ObservationModel(robot_state state_trans, laser_odom::pc laser_scan, Eigen::MatrixXd grid_map)
+weight_list PF::ObservationModel(robot_state state_trans, laser_odom::pc laser_scan, snake_map::SnakeMap &grid_map)
 {
     int beam_num = laser_scan.cols();
     Eigen::Vector2d point_index, point_diff;
