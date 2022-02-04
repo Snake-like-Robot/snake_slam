@@ -34,6 +34,7 @@ namespace snake_map
         SnakeMap(int lenx, int leny, double xyreso);
         //初始化类，整数lenx，leny表示地图大小（多少格），xyreso表示精度，即每格多宽
         int update(Eigen::VectorXd ox, Eigen::VectorXd oy, double center_x, double center_y);
+        int update(Eigen::MatrixXd oxy, Eigen::Vector2d center);
         //向其中添加一世界坐标系下的激光数据，分别为激光点坐标x向量，坐标y向量，以及小车的x，y坐标
         Eigen::Vector2i getMapIndex(Eigen::Vector2d tag){
             Eigen::Vector2i p;
