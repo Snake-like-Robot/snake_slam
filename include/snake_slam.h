@@ -6,6 +6,8 @@
 #include <eigen3/Eigen/Dense>
 
 #include "laser_odometer.h"
+#include "mapping.h"
+#include "snake_pf.h"
 
 namespace snake_slam
 {

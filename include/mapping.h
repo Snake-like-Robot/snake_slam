@@ -25,7 +25,7 @@ namespace snake_map
         uint64_t xw, yw;
         void gridset(int x, int y, bool state);
         void bresenham(int cx, int cy, int ox, int oy);
-        int getMapIndex(int x,int y);
+        int getMapIndex(int x, int y);
         int getindexX(double x);
         int getindexY(double y);
         Eigen::MatrixXd pmap, logm;
@@ -36,16 +36,19 @@ namespace snake_map
         int update(Eigen::VectorXd ox, Eigen::VectorXd oy, double center_x, double center_y);
         int update(Eigen::MatrixXd oxy, Eigen::Vector2d center);
         //向其中添加一世界坐标系下的激光数据，分别为激光点坐标x向量，坐标y向量，以及小车的x，y坐标
-        Eigen::Vector2i getMapIndex(Eigen::Vector2d tag){
+        Eigen::Vector2i getMapIndex(Eigen::Vector2d tag)
+        {
             Eigen::Vector2i p;
-            p(0)=getindexX(tag(0));
-            p(1)=getindexY(tag(1));
+            p(0) = getindexX(tag(0));
+            p(1) = getindexY(tag(1));
             return p;
         }
-        Eigen::Vector2d getMapGrid(Eigen::Vector2i tag){
+        Eigen::Vector2d getMapGrid(Eigen::Vector2i tag)
+        {
             Eigen::Vector2d p;
-            p(0)=minx+tag(0)*xyreso+xyreso/2;
-            p(1)=miny+tag(1)*xyreso+xyreso/2;
+            p(0) = minx + tag(0) * xyreso + xyreso / 2;
+            p(1) = miny + tag(1) * xyreso + xyreso / 2;
+            return p;
         }
         ~SnakeMap(){};
         nav_msgs::OccupancyGrid rviz_map;

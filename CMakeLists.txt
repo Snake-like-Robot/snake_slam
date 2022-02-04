@@ -146,6 +146,7 @@ add_executable(snake_slam_node
 src/snake_slam.cpp
 src/laser_odometer.cpp
 src/snake_pf.cpp
+src/mapping.cpp
 )
 
 ## Rename C++ executable without prefix
