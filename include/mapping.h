@@ -10,7 +10,7 @@
 /*采用贝叶斯概率或暴力概率*/
 #define Bayes true
 /*本地测试，是否在本地开启一个ros节点，手动输入数据仿真*/
-#define _TEST_ true
+#define _TEST_ false
 /*free情况下的概率态，值为ln(0.2/0.8)*/
 #define lofree -1.3863
 /*occupy情况下的概率态，值为ln(0.9/0.1)*/
