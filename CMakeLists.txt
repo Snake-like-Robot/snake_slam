@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(snake_slam)
-
+SET(CMAKE_BUILD_TYPE DEBUG)  #添加调试模式
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
