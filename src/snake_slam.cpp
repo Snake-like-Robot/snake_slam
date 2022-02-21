@@ -38,7 +38,7 @@ SnakeSlam::SnakeSlam(const std::string &laser_topic_sub, int num)
         last_particles(2, i) = 0;
     }
 
-    odom = new laser_odom::LaserOdom(10);
+    odom = new laser_odom::LaserOdom(1);
     map = new snake_map::SnakeMap(20, 20, 0.1);
 
     snakePF::pf_coefs coefs;
@@ -80,7 +80,7 @@ void SnakeSlam::LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_m
     /*激光里程计计算，得到两帧之间的位姿变化关系*/
     Eigen::Matrix2d R;
     Eigen::Vector2d t;
-    //error 1
+    // error 1
     odom->IcpProcess(R, t, cur_pc, last_pc);
     /*局部坐标系下的激光数据点转换到世界坐标系*/
     cur_pc_world = Local2World(last_R * R, last_R * t + last_t, cur_pc);
@@ -91,7 +91,7 @@ void SnakeSlam::LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_m
     map->update(cur_pc_world, last_state.topRows(2));
     /*循环赋值*/
     double theta = last_state(2, 0);
-    last_R << cos(theta) , sin(theta),
+    last_R << cos(theta), sin(theta),
         sin(theta), cos(theta);
     last_t << last_state(0, 0), last_state(1, 0);
     last_pc = cur_pc;
@@ -128,7 +128,7 @@ laser_odom::pc SnakeSlam::Local2World(Eigen::Matrix2d R, Eigen::Vector2d t, lase
 {
     laser_odom::pc pc_world;
     pc_world.resize(2, pc_local.cols());
-    pc_world = R * pc_local + t.replicate(1,pc_local.cols());
+    pc_world = R * pc_local + t.replicate(1, pc_local.cols());
     return pc_world;
 }
 

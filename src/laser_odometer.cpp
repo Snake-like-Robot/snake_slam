@@ -39,10 +39,10 @@ void LaserOdom::IcpProcess(Eigen::Matrix2d &rot_mat, Eigen::Vector2d &trans_vect
         // std::cout << "ICP iteration count:" << iter_cnt << std::endl; //用于调试误差变化阈值
         tar_matched = ClosestMatch(src, tar);
         /*计算去质心坐标*/
-        src_center = 1.0 / src_point_num * src.rowwise().sum();         // p'
-        tar_center = 1.0 / src_point_num * tar_matched.rowwise().sum(); // p
-        src_decenter = src - src_center.replicate(1,src_point_num);                          // q'
-        tar_decenter = tar_matched - tar_center.replicate(1,src_point_num);                  // q
+        src_center = 1.0 / src_point_num * src.rowwise().sum();              // p'
+        tar_center = 1.0 / src_point_num * tar_matched.rowwise().sum();      // p
+        src_decenter = src - src_center.replicate(1, src_point_num);         // q'
+        tar_decenter = tar_matched - tar_center.replicate(1, src_point_num); // q
         /*SVD分解计算旋转矩阵*/
         W = src_decenter * tar_decenter.transpose();
         V = svd.matrixV();
@@ -52,7 +52,7 @@ void LaserOdom::IcpProcess(Eigen::Matrix2d &rot_mat, Eigen::Vector2d &trans_vect
         /*对结果进行评估*/
         score = MatchScoreEvaluate(R, t, src, tar_matched);
         /*实施变换*/
-        src = R * src + t.replicate(1,src_point_num);
+        // src = R * src + t.replicate(1, src_point_num);
 
         if (score < last_score && last_score - score < icp_err_change_threshold)
         {
@@ -124,7 +124,7 @@ double LaserOdom::MatchScoreEvaluate(Eigen::Matrix2d R, Eigen::Vector2d t, pc sr
     int point_num = src.cols();
     src_trans.resize(2, point_num);
     point_diff.resize(2, point_num);
-    src_trans = R * src + t.replicate(1,point_num);
+    src_trans = R * src + t.replicate(1, point_num);
     double score = 0;
     for (int i = 0; i < point_num; i++)
     {
