@@ -56,13 +56,13 @@ SnakeSlam::~SnakeSlam()
 }
 
 /**
- * @brief 
- * 
- * @param scan_msg 
+ * @brief
+ *
+ * @param scan_msg
  * @version 0.1
  * @author jeong (lzh_jeong@qq.com)
  * @date 2022-02-04
- * 
+ *
  * @details
  * @todo 1.初始条件下，粒子滤波器不收敛，转换矩阵如何赋值
  */
@@ -80,21 +80,22 @@ void SnakeSlam::LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_m
     /*激光里程计计算，得到两帧之间的位姿变化关系*/
     Eigen::Matrix2d R;
     Eigen::Vector2d t;
+    //error 1
     odom->IcpProcess(R, t, cur_pc, last_pc);
-    /*局部坐标系下的激光数据点转换到世界坐标系*/
-    cur_pc_world = Local2World(last_R * R, last_R * t + last_t, cur_pc);
-    /*粒子滤波器*/
-    particles = pf->PfProcess(last_particles, cur_pc_world, R, t, map);
-    /*基于新的位置更新地图*/
-    last_state = 1.0 / particle_num * particles.rowwise().sum();
-    map->update(cur_pc_world, last_state.topRows(2));
-    /*循环赋值*/
-    double theta = last_state(2, 0);
-    last_R << cos(theta) - sin(theta),
-        sin(theta), cos(theta);
-    last_t << last_state(0, 0), last_state(1, 0);
-    last_pc = cur_pc;
-    last_particles = particles;
+    // /*局部坐标系下的激光数据点转换到世界坐标系*/
+    // cur_pc_world = Local2World(last_R * R, last_R * t + last_t, cur_pc);
+    // /*粒子滤波器*/
+    // particles = pf->PfProcess(last_particles, cur_pc_world, R, t, map);
+    // /*基于新的位置更新地图*/
+    // last_state = 1.0 / particle_num * particles.rowwise().sum();
+    // map->update(cur_pc_world, last_state.topRows(2));
+    // /*循环赋值*/
+    // double theta = last_state(2, 0);
+    // last_R << cos(theta) - sin(theta),
+    //     sin(theta), cos(theta);
+    // last_t << last_state(0, 0), last_state(1, 0);
+    // last_pc = cur_pc;
+    // last_particles = particles;
 }
 
 /**
@@ -134,6 +135,6 @@ laser_odom::pc SnakeSlam::Local2World(Eigen::Matrix2d R, Eigen::Vector2d t, lase
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "laser_test");
-    SnakeSlam slam("scan", 50);
+    SnakeSlam slam("/course_agv/laser/scan", 50);
     ros::spin();
 }
