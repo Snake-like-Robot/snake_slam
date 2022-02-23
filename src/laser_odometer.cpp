@@ -1,6 +1,7 @@
 #include "laser_odometer.h"
 
 using namespace laser_odom;
+using namespace Eigen;
 
 LaserOdom::LaserOdom(int max_iter) : max_iter_cnt(max_iter)
 {
