@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
 #include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/SVD>
 
 namespace laser_odom
 {

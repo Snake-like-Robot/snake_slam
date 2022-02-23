@@ -21,6 +21,7 @@ SnakeSlam::SnakeSlam(const std::string &laser_topic_sub, const std::string &map_
     std::cout << "----------slam node start!----------" << std::endl;
     _laser_sub = _nh.subscribe(laser_topic_sub, 100, &SnakeSlam::LaserScanCallback, this);
     _map_pub = _nh.advertise<nav_msgs::OccupancyGrid>(map_topic_pub, 100);
+    _marker_pub = _nh.advertise<visualization_msgs::Marker>("/visualization_marker", 10);
 
     is_first = true;
     last_state.resize(3, 1);
@@ -49,6 +50,22 @@ SnakeSlam::SnakeSlam(const std::string &laser_topic_sub, const std::string &map_
     coefs.sigma_hit_frac = 0.03;
     coefs.state_num = particle_num;
     pf = new snakePF::PF(coefs);
+
+    points.header.frame_id = "map";
+    points.header.stamp = ros::Time::now();
+    points.action = visualization_msgs::Marker::ADD;
+    points.pose.orientation.w = 1.0;
+
+    points.id = 0;
+
+    points.type = visualization_msgs::Marker::POINTS;
+
+    points.scale.x = 0.025;
+    points.scale.y = 0.025;
+
+    points.color.g = 1.0f;
+    points.color.a = 1.0;
+
     std::cout << "init finished!" << std::endl;
 }
 
@@ -87,46 +104,25 @@ void SnakeSlam::LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_m
         return;
     }
     cur_pc = LaserMsg2Pc(scan_msg);
+
     /*激光里程计计算，得到两帧之间的位姿变化关系*/
     Eigen::Matrix2d R;
     Eigen::Vector2d t;
     odom->IcpProcess(R, t, cur_pc, last_pc);
-    /*局部坐标系下的激光数据点转换到世界坐标系*/
-    cur_pc_world = Local2World(last_R * R, last_R * t + last_t, cur_pc);
-    /*粒子滤波器*/
-    particles = pf->PfProcess(last_particles, cur_pc_world, R, t, map);
-    /*基于新的位置更新地图*/
-    last_state = 1.0 / particle_num * particles.rowwise().sum();
-    // map->update(cur_pc_world, last_state.topRows(2));
-    /*循环赋值*/
-    double theta = last_state(2, 0);
-    // last_R << cos(theta), sin(theta),
-    //     sin(theta), cos(theta);
-    // last_t << last_state(0, 0), last_state(1, 0);
 
-    // std::cout << last_R << std::endl
-    //           << last_t << std::endl;
-    //   << "--R and t--" << std::endl
-    //   << R << std::endl
-    //   << t << std::endl
-    //   << "------" << std::endl;
-    last_R = last_R * R;
     last_t = last_R * t + last_t;
+    last_R = last_R * R;
+
+    std::cout << "R" << std::endl
+              << R << std::endl;
+    std::cout << "t" << std::endl
+              << t << std::endl;
+
+    laser_odom::pc cur_pc_world = Local2World(R, t, cur_pc);
+    MarkerVisualize(cur_pc_world);
+
     last_pc = cur_pc;
-    last_particles = particles;
 
-    std::cout << last_R << std::endl
-              << last_t << std::endl;
-
-    // std::cout << last_t(0, 0) << "," << last_t(1, 0) << std::endl;
-
-    //这里应该封装一下
-    // _map_pub.publish(map->rviz_map);
-
-    _tf_broadcaster.sendTransform(
-        tf::StampedTransform(
-            tf::Transform(tf::createQuaternionFromYaw(theta), tf::Vector3(last_t(0, 0), last_t(1, 0), 0)),
-            ros::Time::now(), "map", "base_link"));
     ROS_INFO_STREAM("Done");
 }
 
@@ -164,9 +160,30 @@ laser_odom::pc SnakeSlam::Local2World(Eigen::Matrix2d R, Eigen::Vector2d t, lase
     return pc_world;
 }
 
+void SnakeSlam::MarkerVisualize(laser_odom::pc point_cloud)
+{
+
+    geometry_msgs::Point p;
+
+    int pc_num = point_cloud.cols();
+
+    // points.points.clear();
+
+    for (int i = 0; i < pc_num; i++)
+    {
+        p.x = point_cloud(0, i);
+        p.y = point_cloud(1, i);
+        p.z = 0;
+        points.points.push_back(p);
+    }
+
+    _marker_pub.publish(points);
+    ROS_INFO_STREAM("Markers!");
+}
+
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "laser_test");
+    ros::init(argc, argv, "snake_slam_node");
     SnakeSlam slam("/course_agv/laser/scan", "/srtp/map", 50);
     ros::spin();
 }
