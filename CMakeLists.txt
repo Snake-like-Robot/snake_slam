@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(snake_slam)
-SET(CMAKE_BUILD_TYPE DEBUG)
-
+# set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g ")
+# set (CMAKE_VERBOSE_MAKEFILE ON)
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+  tf
 )
 
 ## System dependencies are found with CMake's conventions

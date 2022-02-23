@@ -72,11 +72,14 @@ void SnakeMap::bresenham(int x0, int y0, int x1, int y1)
 int SnakeMap::update(Eigen::VectorXd ox, Eigen::VectorXd oy, double center_x, double center_y)
 {
     int x, y, cx = getindexX(center_x), cy = getindexY(center_y);
+    std::cout << "tag 0.1" << std::endl;
     for (int i = 0; i < ox.size(); i++)
     {
         x = getindexX(ox(i));
         y = getindexY(oy(i));
+        std::cout << "tag 0.2" << std::endl;
         gridset(x, y, Occupy);
+        std::cout << "tag 0.3" << std::endl;
         bresenham(cx, cy, x, y);
     }
     return 0;

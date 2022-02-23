@@ -15,11 +15,12 @@ using namespace snake_slam;
  *       2.粒子滤波器的参数(各种参数)
  *       3.角度的-pi~pi问题
  */
-SnakeSlam::SnakeSlam(const std::string &laser_topic_sub, int num)
+SnakeSlam::SnakeSlam(const std::string &laser_topic_sub, const std::string &map_topic_pub, int num)
     : particle_num(num)
 {
     std::cout << "----------slam node start!----------" << std::endl;
     _laser_sub = _nh.subscribe(laser_topic_sub, 100, &SnakeSlam::LaserScanCallback, this);
+    _map_pub = _nh.advertise<nav_msgs::OccupancyGrid>(map_topic_pub, 100);
 
     is_first = true;
     last_state.resize(3, 1);
@@ -28,6 +29,8 @@ SnakeSlam::SnakeSlam(const std::string &laser_topic_sub, int num)
     last_state << 0, 0, 0;
     last_R << 1, 0, 0, 1;
     last_t << 0, 0;
+
+    abort_num = 0;
 
     srand(time(NULL));
     double A = -10.0, B = 10.0;
@@ -38,14 +41,15 @@ SnakeSlam::SnakeSlam(const std::string &laser_topic_sub, int num)
         last_particles(2, i) = 0;
     }
 
-    odom = new laser_odom::LaserOdom(1);
-    map = new snake_map::SnakeMap(20, 20, 0.1);
+    odom = new laser_odom::LaserOdom(10);
+    map = new snake_map::SnakeMap(129, 129, 0.155);
 
     snakePF::pf_coefs coefs;
     coefs.lambda_short = 1;
     coefs.sigma_hit_frac = 0.03;
     coefs.state_num = particle_num;
     pf = new snakePF::PF(coefs);
+    std::cout << "init finished!" << std::endl;
 }
 
 SnakeSlam::~SnakeSlam()
@@ -68,11 +72,17 @@ SnakeSlam::~SnakeSlam()
  */
 void SnakeSlam::LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
 {
+    ROS_INFO_STREAM("msg receive!");
+    if (abort_num < 5)
+    {
+        abort_num++;
+        return;
+    }
     /*第一帧数据需要初始化一个可用地图，坐标系定义为map*/
     if (is_first)
     {
         last_pc = LaserMsg2Pc(scan_msg);
-        map->update(last_pc, last_state.topRows(2));
+        // map->update(last_pc, last_state.topRows(2));
         is_first = false;
         return;
     }
@@ -80,7 +90,6 @@ void SnakeSlam::LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_m
     /*激光里程计计算，得到两帧之间的位姿变化关系*/
     Eigen::Matrix2d R;
     Eigen::Vector2d t;
-    // error 1
     odom->IcpProcess(R, t, cur_pc, last_pc);
     /*局部坐标系下的激光数据点转换到世界坐标系*/
     cur_pc_world = Local2World(last_R * R, last_R * t + last_t, cur_pc);
@@ -88,14 +97,37 @@ void SnakeSlam::LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_m
     particles = pf->PfProcess(last_particles, cur_pc_world, R, t, map);
     /*基于新的位置更新地图*/
     last_state = 1.0 / particle_num * particles.rowwise().sum();
-    map->update(cur_pc_world, last_state.topRows(2));
+    // map->update(cur_pc_world, last_state.topRows(2));
     /*循环赋值*/
     double theta = last_state(2, 0);
-    last_R << cos(theta), sin(theta),
-        sin(theta), cos(theta);
-    last_t << last_state(0, 0), last_state(1, 0);
+    // last_R << cos(theta), sin(theta),
+    //     sin(theta), cos(theta);
+    // last_t << last_state(0, 0), last_state(1, 0);
+
+    // std::cout << last_R << std::endl
+    //           << last_t << std::endl;
+    //   << "--R and t--" << std::endl
+    //   << R << std::endl
+    //   << t << std::endl
+    //   << "------" << std::endl;
+    last_R = last_R * R;
+    last_t = last_R * t + last_t;
     last_pc = cur_pc;
     last_particles = particles;
+
+    std::cout << last_R << std::endl
+              << last_t << std::endl;
+
+    // std::cout << last_t(0, 0) << "," << last_t(1, 0) << std::endl;
+
+    //这里应该封装一下
+    // _map_pub.publish(map->rviz_map);
+
+    _tf_broadcaster.sendTransform(
+        tf::StampedTransform(
+            tf::Transform(tf::createQuaternionFromYaw(theta), tf::Vector3(last_t(0, 0), last_t(1, 0), 0)),
+            ros::Time::now(), "map", "base_link"));
+    ROS_INFO_STREAM("Done");
 }
 
 /**
@@ -135,6 +167,6 @@ laser_odom::pc SnakeSlam::Local2World(Eigen::Matrix2d R, Eigen::Vector2d t, lase
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "laser_test");
-    SnakeSlam slam("/course_agv/laser/scan", 50);
+    SnakeSlam slam("/course_agv/laser/scan", "/srtp/map", 50);
     ros::spin();
 }
