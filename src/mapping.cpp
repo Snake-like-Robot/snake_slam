@@ -21,8 +21,8 @@ SnakeMap::SnakeMap(int lenx, int leny, double xyr)
     rviz_map.info.resolution = xyreso;
     rviz_map.info.width = xw;
     rviz_map.info.height = yw;
-    rviz_map.info.origin.position.x=0;
-    rviz_map.info.origin.position.y=0;
+    rviz_map.info.origin.position.x=minx;
+    rviz_map.info.origin.position.y=miny;
     rviz_map.info.origin.position.z=0;
     rviz_map.info.origin.orientation.x=0;
     rviz_map.info.origin.orientation.y=0;
