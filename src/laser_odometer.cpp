@@ -30,9 +30,8 @@ void LaserOdom::IcpProcess(Eigen::Matrix2d &rot_mat, Eigen::Vector2d &trans_vect
 
     pc tar_matched, src_decenter, tar_decenter;
     Eigen::Vector2d src_center, tar_center;
-    Eigen::Matrix2d W, U, V, R;
-    Eigen::Vector2d t;
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(W, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    Eigen::Matrix2d W, U, V, R, last_R = Eigen::Matrix2d::Identity();
+    Eigen::Vector2d t, last_t = Eigen::Vector2d::Zero();
     double score;
     for (int iter_cnt = 0; iter_cnt < max_iter_cnt; iter_cnt++)
     {
@@ -45,6 +44,7 @@ void LaserOdom::IcpProcess(Eigen::Matrix2d &rot_mat, Eigen::Vector2d &trans_vect
         tar_decenter = tar_matched - tar_center.replicate(1, src_point_num); // q
         /*SVD分解计算旋转矩阵*/
         W = src_decenter * tar_decenter.transpose();
+        Eigen::JacobiSVD<Eigen::MatrixXd> svd(W, Eigen::ComputeThinU | Eigen::ComputeThinV);
         V = svd.matrixV();
         U = svd.matrixU();
         R = V * U.transpose();
@@ -54,27 +54,17 @@ void LaserOdom::IcpProcess(Eigen::Matrix2d &rot_mat, Eigen::Vector2d &trans_vect
         /*实施变换*/
         src = R * src + t.replicate(1, src_point_num);
 
+        last_R = last_R * R;
+        last_t = R * last_t + t;
+
         if (score < last_score && last_score - score < icp_err_change_threshold)
         {
             break;
         }
         last_score = score;
     }
-    /*返回旋转矩阵与平移向量*/
-    // if (abs(t(0)) > 10 || abs(t(1)) > 10)
-    // {
-    //     return;
-    // }
-    // else
-    // {
-    rot_mat = R;
-    trans_vector = t;
-    // std::cout << "target center" << tar_center << std::endl;
-    // std::cout << "source center" << src_center << std::endl;
-    // }
-
-    // std::cout << R << std::endl
-    //           << t << std::endl;
+    rot_mat = last_R;
+    trans_vector = last_t;
 }
 
 /**

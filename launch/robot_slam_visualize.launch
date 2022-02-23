@@ -14,4 +14,8 @@
     <group if="$(arg use_rviz)">
         <node pkg="rviz" type="rviz" name="rviz" required="true" args="-d $(find snake_slam)/config/turtlebot3_slam_config.rviz"/>
     </group>
+
+    <node pkg="snake_slam" type="snake_slam_node" name="snake_slam_node" output="screen"/>
+
+    <!-- <node pkg="rosbag" type="play" name="player" args="-!!!-clock $(find course_agv_slam)/rosbag_record/2020-06-26-23-18-01.bag"/> -->
 </launch>
