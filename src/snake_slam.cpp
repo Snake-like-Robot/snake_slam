@@ -91,42 +91,6 @@ void SnakeSlam::LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_m
     Eigen::Matrix2d R;
     Eigen::Vector2d t;
     odom->IcpProcess(R, t, cur_pc, last_pc);
-    /*局部坐标系下的激光数据点转换到世界坐标系*/
-    cur_pc_world = Local2World(last_R * R, last_R * t + last_t, cur_pc);
-    /*粒子滤波器*/
-    particles = pf->PfProcess(last_particles, cur_pc_world, R, t, map);
-    /*基于新的位置更新地图*/
-    last_state = 1.0 / particle_num * particles.rowwise().sum();
-    // map->update(cur_pc_world, last_state.topRows(2));
-    /*循环赋值*/
-    double theta = last_state(2, 0);
-    // last_R << cos(theta), sin(theta),
-    //     sin(theta), cos(theta);
-    // last_t << last_state(0, 0), last_state(1, 0);
-
-    // std::cout << last_R << std::endl
-    //           << last_t << std::endl;
-    //   << "--R and t--" << std::endl
-    //   << R << std::endl
-    //   << t << std::endl
-    //   << "------" << std::endl;
-    last_R = last_R * R;
-    last_t = last_R * t + last_t;
-    last_pc = cur_pc;
-    last_particles = particles;
-
-    std::cout << last_R << std::endl
-              << last_t << std::endl;
-
-    // std::cout << last_t(0, 0) << "," << last_t(1, 0) << std::endl;
-
-    //这里应该封装一下
-    // _map_pub.publish(map->rviz_map);
-
-    _tf_broadcaster.sendTransform(
-        tf::StampedTransform(
-            tf::Transform(tf::createQuaternionFromYaw(theta), tf::Vector3(last_t(0, 0), last_t(1, 0), 0)),
-            ros::Time::now(), "map", "base_link"));
     ROS_INFO_STREAM("Done");
 }
 
