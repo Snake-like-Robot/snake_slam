@@ -16,7 +16,7 @@ SnakeMap::SnakeMap(int lenx, int leny, double xyr)
     maxx = -minx;
     miny = -width_y / 2.0;
     maxy = -miny;
-    rviz_map.header.frame_id = "slamGridMap";
+    rviz_map.header.frame_id = "map";
     rviz_map.header.stamp = ros::Time::now();
     rviz_map.info.resolution = xyreso;
     rviz_map.info.width = xw;
