@@ -42,6 +42,8 @@ SnakeSlam::SnakeSlam(const std::string &laser_topic_sub, const std::string &map_
         last_particles(2, i) = 0;
     }
 
+    MarkerVisualize(last_particles);
+
     odom = new laser_odom::LaserOdom(10);
     map = new snake_map::SnakeMap(129, 129, 0.155);
 
@@ -110,16 +112,14 @@ void SnakeSlam::LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_m
     Eigen::Vector2d t;
     odom->IcpProcess(R, t, cur_pc, last_pc);
 
+    laser_odom::pc cur_pc_world = Local2World(R, t, cur_pc);
+
+    last_particles = pf->PfProcess(last_particles, cur_pc_world, R, t, map);
+
     last_t = last_R * t + last_t;
     last_R = last_R * R;
 
-    std::cout << "R" << std::endl
-              << R << std::endl;
-    std::cout << "t" << std::endl
-              << t << std::endl;
-
-    laser_odom::pc cur_pc_world = Local2World(R, t, cur_pc);
-    MarkerVisualize(cur_pc_world);
+    MarkerVisualize(last_particles);
 
     last_pc = cur_pc;
 
@@ -167,7 +167,7 @@ void SnakeSlam::MarkerVisualize(laser_odom::pc point_cloud)
 
     int pc_num = point_cloud.cols();
 
-    // points.points.clear();
+    points.points.clear();
 
     for (int i = 0; i < pc_num; i++)
     {
@@ -179,6 +179,11 @@ void SnakeSlam::MarkerVisualize(laser_odom::pc point_cloud)
 
     _marker_pub.publish(points);
     ROS_INFO_STREAM("Markers!");
+}
+
+void SnakeSlam::MarkerVisualize(snakePF::robot_state particles)
+{
+    MarkerVisualize((laser_odom::pc)particles.topRows(2));
 }
 
 int main(int argc, char **argv)
