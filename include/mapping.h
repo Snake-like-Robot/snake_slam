@@ -16,6 +16,8 @@
 #define lofree -1.3863
 /*occupy情况下的概率态，值为ln(0.9/0.1)*/
 #define looccu 2.1972
+/*地图旋转，表示逆时针旋转90*MapRotate度*/
+#define MapRotate 1
 namespace snake_map
 {
     class SnakeMap

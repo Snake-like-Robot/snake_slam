@@ -28,13 +28,24 @@ SnakeMap::SnakeMap(int lenx, int leny, double xyr)
     rviz_map.info.origin.orientation.y = 0;
     rviz_map.info.origin.orientation.z = 0;
     rviz_map.info.origin.orientation.w = 1;
+    if (MapRotate&1) {
+        rviz_map.info.width = yw;
+        rviz_map.info.height = xw;
+        rviz_map.info.origin.position.x = miny;
+        rviz_map.info.origin.position.y = minx;
+    }
     rviz_map.data.resize(xw * yw);
     for (int i = 0; i < xw * yw; i++)
         rviz_map.data[i] = -1;
 }
 int SnakeMap::getindexX(double x) { return (int)((x - minx) / xyreso); }
 int SnakeMap::getindexY(double y) { return (int)((y - miny) / xyreso); }
-int SnakeMap::MapIndex(int x, int y) { return x * rviz_map.info.width + y; }
+int SnakeMap::MapIndex(int x, int y){
+    int t;
+    if (MapRotate&2) x=xw-x,y=yw-y;
+    if (MapRotate&1) t=x,x=y,y=xw-t;
+    return x * rviz_map.info.width + y;
+}
 void SnakeMap::gridset(int x, int y, bool state)
 {
     if (x < 0 || x >= xw || y < 0 || y >= yw)
