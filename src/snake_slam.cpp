@@ -2,6 +2,8 @@
 
 using namespace snake_slam;
 
+#define isTest false
+
 /**
  * @brief Construct a new Snake Slam:: Snake Slam object
  *
@@ -19,7 +21,9 @@ SnakeSlam::SnakeSlam(const std::string &laser_topic_sub, const std::string &map_
     : particle_num(num)
 {
     std::cout << "----------slam node start!----------" << std::endl;
+#if !isTest
     _laser_sub = _nh.subscribe(laser_topic_sub, 100, &SnakeSlam::LaserScanCallback, this);
+#endif
     _map_pub = _nh.advertise<nav_msgs::OccupancyGrid>(map_topic_pub, 100);
     _marker_pub = _nh.advertise<visualization_msgs::Marker>("/visualization_marker", 10);
 
@@ -33,27 +37,31 @@ SnakeSlam::SnakeSlam(const std::string &laser_topic_sub, const std::string &map_
 
     abort_num = 0;
 
-    srand(time(NULL));
-    double A = -10.0, B = 10.0;
+    srand((unsigned)time(NULL));
+    double lenx = 129, leny = 129, xyreso = 0.155;
     for (int i = 0; i < particle_num; i++)
     {
-        last_particles(0, i) = A + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (B - A)));
-        last_particles(1, i) = A + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (B - A)));
+        last_particles(0, i) = RandNum(-0.5 * lenx * xyreso, 0.5 * lenx * xyreso);
+        last_particles(1, i) = RandNum(-0.5 * leny * xyreso, 0.5 * leny * xyreso);
         last_particles(2, i) = 0;
     }
 
     MarkerVisualize(last_particles);
 
-    odom = new laser_odom::LaserOdom(10);
-    map = new snake_map::SnakeMap(129, 129, 0.155);
+    odom = new laser_odom::LaserOdom(30);
+    map = new snake_map::SnakeMap(lenx, leny, xyreso);
 
     snakePF::pf_coefs coefs;
     coefs.lambda_short = 1;
     coefs.sigma_hit_frac = 0.03;
     coefs.state_num = particle_num;
+    coefs.z_hit = 0.25;
+    coefs.z_max = 0.25;
+    coefs.z_rand = 0.25;
+    coefs.z_short = 0.25;
     pf = new snakePF::PF(coefs);
 
-    points.header.frame_id = "map";
+    points.header.frame_id = "/map";
     points.header.stamp = ros::Time::now();
     points.action = visualization_msgs::Marker::ADD;
     points.pose.orientation.w = 1.0;
@@ -62,13 +70,17 @@ SnakeSlam::SnakeSlam(const std::string &laser_topic_sub, const std::string &map_
 
     points.type = visualization_msgs::Marker::POINTS;
 
-    points.scale.x = 0.025;
-    points.scale.y = 0.025;
+    points.scale.x = 0.1;
+    points.scale.y = 0.1;
 
-    points.color.g = 1.0f;
-    points.color.a = 1.0;
+    points.color.r = 1.0f;
+    points.color.a = 1.0f;
 
     std::cout << "init finished!" << std::endl;
+
+#if isTest
+    Test();
+#endif
 }
 
 SnakeSlam::~SnakeSlam()
@@ -101,7 +113,14 @@ void SnakeSlam::LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_m
     if (is_first)
     {
         last_pc = LaserMsg2Pc(scan_msg);
-        // map->update(last_pc, last_state.topRows(2));
+        map->update(last_pc, Eigen::Vector2d::Zero());
+        ROS_INFO_STREAM("map update!");
+
+        snakePF::pf_coefs coefs;
+        coefs = pf->CoefGet();
+        coefs.range_max = scan_msg->range_max;
+        pf->CoefUpdate(coefs);
+
         is_first = false;
         return;
     }
@@ -112,17 +131,25 @@ void SnakeSlam::LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_m
     Eigen::Vector2d t;
     odom->IcpProcess(R, t, cur_pc, last_pc);
 
-    laser_odom::pc cur_pc_world = Local2World(R, t, cur_pc);
+    last_R = last_R * R;
+    last_t = last_R * t + last_t;
+
+    laser_odom::pc cur_pc_world = Local2World(last_R, last_t, cur_pc);
 
     last_particles = pf->PfProcess(last_particles, cur_pc_world, R, t, map);
 
-    last_t = last_R * t + last_t;
-    last_R = last_R * R;
+    Eigen::Vector2d last_center = last_particles.topRows(2).rowwise().sum();
+
+    std::cout << "--------center--------" << std::endl
+              << last_center << std::endl;
+
+    map->update(cur_pc_world, last_center);
 
     MarkerVisualize(last_particles);
 
     last_pc = cur_pc;
 
+    _map_pub.publish(map->rviz_map);
     ROS_INFO_STREAM("Done");
 }
 
@@ -156,6 +183,7 @@ laser_odom::pc SnakeSlam::Local2World(Eigen::Matrix2d R, Eigen::Vector2d t, lase
 {
     laser_odom::pc pc_world;
     pc_world.resize(2, pc_local.cols());
+    // pc_world = R.transpose() * (pc_local - t.replicate(1, pc_local.cols()));
     pc_world = R * pc_local + t.replicate(1, pc_local.cols());
     return pc_world;
 }
@@ -186,9 +214,29 @@ void SnakeSlam::MarkerVisualize(snakePF::robot_state particles)
     MarkerVisualize((laser_odom::pc)particles.topRows(2));
 }
 
+double SnakeSlam::RandNum(double low, double high)
+{
+    return low + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (high - low)));
+}
+
+void SnakeSlam::Test()
+{
+    ros::Rate loop(10);
+
+    laser_odom::pc test_markers;
+
+    while (ros::ok())
+    {
+        std::cout << last_particles << std::endl;
+        MarkerVisualize(last_particles);
+        ros::spinOnce();
+        loop.sleep();
+    }
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "snake_slam_node");
-    SnakeSlam slam("/course_agv/laser/scan", "/srtp/map", 50);
+    SnakeSlam slam("/course_agv/laser/scan", "/srtp/map", 20);
     ros::spin();
 }

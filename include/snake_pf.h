@@ -44,7 +44,10 @@ namespace snakePF
         double BeamRangeFinderModel(double, double);
         double NormalizeFactorCal(double, double, int);
         double GaussianFunctionCal(double, double);
+        double GaussianFunctionCal(double, double, double);
         robot_state Resample(robot_state, weight_list);
+        void CoefUpdate(pf_coefs);
+        pf_coefs CoefGet();
     };
 }
 

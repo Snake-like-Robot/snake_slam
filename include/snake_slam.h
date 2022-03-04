@@ -49,6 +49,8 @@ namespace snake_slam
         laser_odom::pc Local2World(Eigen::Matrix2d, Eigen::Vector2d, laser_odom::pc);
         void MarkerVisualize(laser_odom::pc);
         void MarkerVisualize(snakePF::robot_state);
+        double RandNum(double, double);
+        void Test();
     };
 };
 #endif

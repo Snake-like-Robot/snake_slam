@@ -23,18 +23,26 @@ PF::~PF() {}
 //这里的地图是全局地图
 robot_state PF::PfProcess(robot_state last_states, laser_odom::pc laser_scan, Eigen::Matrix2d R, Eigen::Vector2d t, snake_map::SnakeMap *grid_map)
 {
+    std::cout << "--------last_states--------" << std::endl
+              << last_states << std::endl;
     /*对t-1时刻的粒子集进行粒子传递*/
     robot_state state_trans;
     state_trans.resize(3, coefs.state_num);
     state_trans = StateTransfer(R, t, last_states);
+    std::cout << "--------state_trans--------" << std::endl
+              << state_trans << std::endl;
     /*对传递后的粒子计算权重(使用观测模型)*/
     weight_list weights;
     weights.resize(1, coefs.state_num);
     weights = ObservationModel(state_trans, laser_scan, grid_map);
+    std::cout << "--------weights--------" << std::endl
+              << weights << std::endl;
     /*基于重要性的重采样，得到新的粒子集*/
     robot_state state_pre;
     state_pre.resize(3, coefs.state_num);
     state_pre = Resample(state_trans, weights);
+    std::cout << "--------state_pre--------" << std::endl
+              << state_pre << std::endl;
 
     return state_pre;
 }
@@ -82,10 +90,20 @@ weight_list PF::ObservationModel(robot_state state_trans, laser_odom::pc laser_s
         for (int beam_id = 0; beam_id < beam_num; beam_id++)
         {
             point_diff = laser_scan.col(beam_id) - state_trans.col(state_id).head(2);
+            // std::cout << point_diff << std::endl;
+
             measured_dist = point_diff.norm();
+            // std::cout << measured_dist << std::endl;
+
             point_index = grid_map->getMapIndex(laser_scan.col(beam_id));
+            // std::cout << point_index << std::endl;
+
             point_diff = grid_map->getMapGrid(point_index) - state_trans.col(state_id).head(2);
+            // std::cout << point_diff << std::endl;
+
             real_dist = point_diff.norm();
+            // std::cout << real_dist << std::endl;
+
             weights(state_id) += BeamRangeFinderModel(real_dist, measured_dist);
         }
     }
@@ -95,7 +113,7 @@ weight_list PF::ObservationModel(robot_state state_trans, laser_odom::pc laser_s
 double PF::BeamRangeFinderModel(double real_dist, double measured_dist)
 {
     /*计算高斯分布的概率及其归一化常数*/
-    double p_hit_eta = NormalizeFactorCal(real_dist, measured_dist, 10);
+    double p_hit_eta = 1.0 / NormalizeFactorCal(real_dist, measured_dist, 10);
     double p_hit = p_hit_eta * GaussianFunctionCal(measured_dist, real_dist);
     /*计算指数分布的概率及其归一化常数*/
     double p_short_eta = 1.0 / (1 - exp(-coefs.lambda_short * real_dist));
@@ -118,12 +136,18 @@ double PF::GaussianFunctionCal(double z, double z_star)
     return 1.0 / (2 * M_PI * coefs.sigma_hit_frac * z) * exp(-pow(z - z_star, 2) / (2 * pow(coefs.sigma_hit_frac * z, 2)));
 }
 
+double PF::GaussianFunctionCal(double x, double mean, double sigma)
+{
+    return 1.0 / (2 * M_PI * sigma) * exp(-pow(x - mean, 2) / (2 * pow(sigma, 2)));
+}
+
 double PF::NormalizeFactorCal(double real, double measured, int step_num)
 {
     double sum = 0, step = coefs.range_max / step_num;
+    double sigma = coefs.sigma_hit_frac * measured;
     for (int i = 0; i < step_num; i++)
     {
-        sum += 0.5 * (GaussianFunctionCal(step * i, real) + GaussianFunctionCal(step * (i + 1), real)) * step;
+        sum += 0.5 * (GaussianFunctionCal(step * i, real, sigma) + GaussianFunctionCal(step * (i + 1), real, sigma)) * step;
     }
     return 1.0 / sum;
 }
@@ -131,8 +155,10 @@ double PF::NormalizeFactorCal(double real, double measured, int step_num)
 robot_state PF::Resample(robot_state states, weight_list weights)
 {
     /*权重归一化*/
-    weights.resize(1, coefs.state_num);
     weights *= 1.0 / weights.sum();
+
+    std::cout << "--------归一权重--------" << std::endl
+              << weights << std::endl;
 
     robot_state states_pre;
     states_pre.resize(3, coefs.state_num);
@@ -148,7 +174,20 @@ robot_state PF::Resample(robot_state states, weight_list weights)
                 states_pre.col(state_id) = states.col(id);
                 break;
             }
+            temp_sum+=weights(id);
         }
+        temp_sum = 0;
     }
     return states_pre;
+}
+
+void PF::CoefUpdate(pf_coefs coef)
+{
+    coefs = coef;
+    return;
+}
+
+pf_coefs PF::CoefGet()
+{
+    return coefs;
 }
