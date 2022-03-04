@@ -61,7 +61,7 @@ SnakeSlam::SnakeSlam(const std::string &laser_topic_sub, const std::string &map_
     coefs.z_short = 0.25;
     pf = new snakePF::PF(coefs);
 
-    points.header.frame_id = "/map";
+    points.header.frame_id = "map";
     points.header.stamp = ros::Time::now();
     points.action = visualization_msgs::Marker::ADD;
     points.pose.orientation.w = 1.0;
